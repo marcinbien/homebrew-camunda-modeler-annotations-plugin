@@ -34,39 +34,33 @@ class CamundaModelerAnnotationsPlugin < Formula
     target_base = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins")
     target = "#{target_base}/camunda-modeler-annotations-plugin"
 
-    # Use rsync which handles macOS permissions better than cp
-    # Note: trailing slashes are important - source/ copies contents, target/ is the destination
-    ohai "Installing plugin to: #{target}"
-    system "mkdir", "-p", target_base
-    system "rsync", "-a", "#{libexec}/", "#{target}/"
-
-    if File.exist?("#{target}/index.js")
-      ohai "✅ Plugin installed successfully"
-    else
-      opoo "Installation may have failed. Please see caveats."
+    # Attempt automatic installation (may be blocked by macOS sandbox)
+    begin
+      system "mkdir", "-p", target
+      system "rsync", "-a", "#{libexec}/", "#{target}/"
+    rescue
+      # Silently fail - user will see instructions in caveats
     end
   end
 
   def caveats
-    target = "~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"
     installed = File.exist?(File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin/index.js"))
 
     if installed
       <<~EOS
-        ✅ Camunda Modeler Annotations Plugin has been installed to:
-           #{target}
+        ✅ Plugin installed successfully!
 
         📝 Restart Camunda Modeler to load the plugin.
       EOS
     else
       <<~EOS
-        ⚠️  Automatic installation was blocked by macOS permissions.
+        📦 Plugin files are ready at: #{libexec}
 
-        To complete installation, run this command:
+        To complete installation, copy-paste this command:
 
-          mkdir -p "~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin" && rsync -a "#{libexec}/" "~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin/"
+          rsync -a "#{libexec}/" ~/Library/Application\\ Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin/
 
-        Then restart Camunda Modeler.
+        Then restart Camunda Modeler to load the plugin.
       EOS
     end
   end
