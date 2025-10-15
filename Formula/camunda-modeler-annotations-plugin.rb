@@ -19,43 +19,26 @@ class CamundaModelerAnnotationsPlugin < Formula
 
     # Install to libexec (Homebrew-managed directory)
     libexec.install Dir["#{plugin_folder}/*"]
-  end
 
-  def post_install
-    # This runs outside the sandbox, so we can write to the user's home directory
-    # Use ENV["HOME"] to ensure we get the real home directory
-    target_dir = "#{ENV["HOME"]}/Library/Application Support/camunda-modeler/resources/plugins"
-    target = "#{target_dir}/camunda-modeler-annotations-plugin"
-
-    # Create parent directory first
-    unless File.directory?(target_dir)
-      ohai "Creating plugins directory: #{target_dir}"
-      FileUtils.mkdir_p(target_dir)
-    end
-
-    # Use ditto to copy files - it handles macOS permissions and extended attributes properly
-    ohai "Installing plugin to: #{target}"
-
-    # Remove existing installation if present
-    FileUtils.rm_rf(target) if File.exist?(target)
-
-    # Copy using ditto
-    system "ditto", libexec.to_s, target
-
-    unless File.exist?("#{target}/index.js")
-      opoo "Plugin installation may have failed - index.js not found"
-    end
-
-    ohai "✅ Plugin installed successfully"
+    # Create a helper script for installation
+    (bin/"camunda-modeler-install-plugin").write <<~EOS
+      #!/bin/bash
+      set -e
+      TARGET="$HOME/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"
+      echo "Installing Camunda Modeler Annotations Plugin..."
+      ditto "#{libexec}" "$TARGET"
+      echo "✅ Plugin installed to: $TARGET"
+      echo "📝 Restart Camunda Modeler to load the plugin."
+    EOS
   end
 
   def caveats
     <<~EOS
-      ✅ Camunda Modeler Annotations Plugin installed to:
-         ~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin
+      To complete the installation, run:
 
-      📝 Restart Camunda Modeler to load the plugin.
-      The plugin will appear in the Plugins menu.
+        camunda-modeler-install-plugin
+
+      This will copy the plugin to Camunda Modeler's plugins directory.
     EOS
   end
 
