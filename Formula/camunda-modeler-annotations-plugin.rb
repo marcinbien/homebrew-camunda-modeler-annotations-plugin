@@ -5,19 +5,20 @@ class CamundaModelerAnnotationsPlugin < Formula
   sha256 "a1d688f67320a17ad3194cdad811eb266404d2b907d367a70e00a7c78a9a3de9"
   version "0.0.2"
 
-  def install
-    # Determine target directory for Camunda Modeler plugins
-    target = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins")
+def install
+  target = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins")
 
-    # Ensure directories exist
-    ohai "Creating plugin directory at #{target}"
-    mkdir_p target
+  # Ensure target directory exists
+  ohai "Creating plugin directory at #{target}"
+  mkdir_p target
 
-    # Unpack the plugin folder (the zip already contains one directory)
-    plugin_dir = "camunda-modeler-annotations-plugin"
-    ohai "Copying plugin files..."
-    cp_r plugin_dir, target
-  end
+  # Find the extracted directory
+  extracted_dir = Dir["#{buildpath}/camunda-modeler-annotations-plugin*"].first
+  ohai "Using extracted directory: #{extracted_dir}"
+
+  # Copy it over
+  cp_r extracted_dir, target
+end
 
   def caveats
     <<~EOS
