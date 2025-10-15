@@ -8,24 +8,27 @@ class CamundaModelerAnnotationsPlugin < Formula
   def install
     # The plugin directory path
     plugin_dir = "#{Dir.home}/Library/Application Support/camunda-modeler/resources/plugins"
+    target_dir = "#{plugin_dir}/camunda-modeler-annotations-plugin"
     
     # Create the plugins directory if it doesn't exist
     FileUtils.mkdir_p(plugin_dir)
     
-    # Copy the plugin directory
-    # Homebrew extracts the zip, so we should have the directory here
+    # Remove target if it exists (for reinstalls)
+    FileUtils.rm_rf(target_dir) if File.exist?(target_dir)
+    
+    # Check if we have the directory or just files
     plugin_source = "camunda-modeler-annotations-plugin"
-    target_dir = "#{plugin_dir}/camunda-modeler-annotations-plugin"
     
     if File.directory?(plugin_source)
-      # Remove target if it exists (for reinstalls)
-      FileUtils.rm_rf(target_dir) if File.exist?(target_dir)
-      # Copy the directory
+      # The directory exists, copy it directly
       FileUtils.cp_r(plugin_source, plugin_dir)
     else
-      # Debug: show what files are present
-      files = Dir["*"]
-      odie "Expected directory '#{plugin_source}' not found.\nFound: #{files.join(', ')}"
+      # Homebrew extracted the contents directly, create the directory structure
+      FileUtils.mkdir_p(target_dir)
+      # Copy all files to the target directory
+      Dir["*"].each do |file|
+        FileUtils.cp_r(file, target_dir)
+      end
     end
   end
 
