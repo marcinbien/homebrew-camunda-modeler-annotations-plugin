@@ -10,16 +10,20 @@ def install
   mkdir_p target
   ohai "Creating plugin directory at #{target}"
 
-  # Unzip the archive to buildpath
+  # Unzip archive into buildpath
   system "unzip", "-q", cached_download, "-d", buildpath
 
-  # The plugin folder inside the zip
-  plugin_folder = Dir.glob("#{buildpath}/camunda-modeler-annotations-plugin/*").first
-  plugin_root = File.dirname(plugin_folder)  # parent folder containing index.js
+  # The inner plugin folder inside the zip
+  plugin_root = Dir.glob("#{buildpath}/camunda-modeler-annotations-plugin/camunda-modeler-annotations-plugin").first
+
+  if plugin_root.nil?
+    odie "❌ Could not find plugin folder inside the zip"
+  end
 
   ohai "Copying plugin folder: #{plugin_root}"
   cp_r plugin_root, target
 end
+
 
 
 
