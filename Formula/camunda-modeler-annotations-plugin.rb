@@ -6,60 +6,48 @@ class CamundaModelerAnnotationsPlugin < Formula
   version "0.0.2"
 
   def install
-    # Get the real home directory (not Homebrew's sandbox home)
-    real_home = ENV["HOME"]
+    # Store the plugin files in Homebrew's Cellar first
+    libexec.install Dir["*"]
     
-    # The plugin directory path
+    # Create a marker file in Homebrew's prefix so it knows we installed something
+    (prefix/"installed.txt").write <<~EOS
+      Camunda Modeler Annotations Plugin
+      Files stored in: #{libexec}
+      Will be linked to user directory in post_install
+    EOS
+  end
+
+  def post_install
+    # This runs outside the sandbox, so we can write to the user's home directory
+    real_home = ENV["HOME"]
     plugin_dir = "#{real_home}/Library/Application Support/camunda-modeler/resources/plugins"
     target_dir = "#{plugin_dir}/camunda-modeler-annotations-plugin"
     
-    # Debug: Show what we're working with
-    ohai "Real home directory: #{real_home}"
-    ohai "Target plugin directory: #{plugin_dir}"
-    ohai "Current directory: #{Dir.pwd}"
-    ohai "Files available:"
-    system "ls", "-la"
+    ohai "Post-install: Installing to #{target_dir}"
     
     # Create the plugins directory if it doesn't exist
     FileUtils.mkdir_p(plugin_dir)
-    ohai "Created plugin directory: #{plugin_dir}"
     
     # Remove target if it exists (for reinstalls)
     FileUtils.rm_rf(target_dir) if File.exist?(target_dir)
     
-    # Check if we have the directory or just files
-    plugin_source = "camunda-modeler-annotations-plugin"
+    # Create the target directory
+    FileUtils.mkdir_p(target_dir)
     
-    if File.directory?(plugin_source)
-      # The directory exists, copy it directly
-      ohai "Found directory '#{plugin_source}', copying to #{plugin_dir}"
-      FileUtils.cp_r(plugin_source, plugin_dir)
-    else
-      # Homebrew extracted the contents directly, create the directory structure
-      ohai "Directory not found, creating #{target_dir} and copying files"
-      FileUtils.mkdir_p(target_dir)
-      # Copy all files to the target directory
-      Dir["*"].each do |file|
-        ohai "Copying: #{file} -> #{target_dir}/#{file}"
-        FileUtils.cp_r(file, target_dir)
-      end
+    # Copy files from Cellar to the plugin directory
+    Dir["#{libexec}/*"].each do |file|
+      FileUtils.cp_r(file, target_dir)
+      ohai "Copied: #{File.basename(file)}"
     end
     
     # Verify installation
     if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
       ohai "Installation successful!"
-      ohai "Files in #{target_dir}:"
+      ohai "Files installed:"
       system "ls", "-la", target_dir
     else
-      opoo "Target directory is empty or doesn't exist!"
+      opoo "Installation may have failed - target directory is empty"
     end
-    
-    # Create a marker file in Homebrew's prefix so it knows we installed something
-    # This prevents "Empty installation" error
-    (prefix/"installed.txt").write <<~EOS
-      Camunda Modeler Annotations Plugin installed to:
-      #{target_dir}
-    EOS
   end
 
 
