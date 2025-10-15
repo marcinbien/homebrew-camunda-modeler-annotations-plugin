@@ -19,26 +19,32 @@ class CamundaModelerAnnotationsPlugin < Formula
 
     # Install to libexec (Homebrew-managed directory)
     libexec.install Dir["#{plugin_folder}/*"]
+  end
 
-    # Create a helper script for installation
-    (bin/"camunda-modeler-install-plugin").write <<~EOS
-      #!/bin/bash
-      set -e
-      TARGET="$HOME/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"
-      echo "Installing Camunda Modeler Annotations Plugin..."
-      ditto "#{libexec}" "$TARGET"
-      echo "✅ Plugin installed to: $TARGET"
-      echo "📝 Restart Camunda Modeler to load the plugin."
-    EOS
+  def post_install
+    # Install directly to the Camunda Modeler plugins directory
+    # Using Ruby's FileUtils instead of system commands to avoid sandbox issues
+    target_base = "#{Dir.home}/Library/Application Support/camunda-modeler/resources/plugins"
+    target = "#{target_base}/camunda-modeler-annotations-plugin"
+
+    # Create the plugins directory if needed
+    FileUtils.mkdir_p(target_base) unless File.directory?(target_base)
+
+    # Remove existing installation if present
+    FileUtils.rm_rf(target) if File.exist?(target)
+
+    # Copy files from libexec to target
+    FileUtils.cp_r(libexec, target)
+
+    ohai "✅ Plugin installed to: #{target}"
   end
 
   def caveats
     <<~EOS
-      To complete the installation, run:
+      ✅ Camunda Modeler Annotations Plugin has been installed.
 
-        camunda-modeler-install-plugin
-
-      This will copy the plugin to Camunda Modeler's plugins directory.
+      📝 Restart Camunda Modeler to load the plugin.
+      The plugin will appear in the Plugins menu.
     EOS
   end
 
