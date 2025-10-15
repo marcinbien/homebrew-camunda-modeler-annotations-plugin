@@ -1,4 +1,4 @@
-class CamundaModelerExtension < Formula
+class CamundaModelerAnnotationsPlugin < Formula
   desc "Extensions/plugins for Camunda Modeler"
   homepage "https://github.com/marcinbien/camunda-modeler-annotations-plugin"
   url "https://github.com/marcinbien/camunda-modeler-annotations-plugin/releases/download/v0.0.2/camunda-modeler-annotations-plugin-v0.0.2.zip"
