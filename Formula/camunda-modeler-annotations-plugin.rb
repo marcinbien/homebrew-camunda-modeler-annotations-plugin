@@ -31,37 +31,32 @@ class CamundaModelerAnnotationsPlugin < Formula
 
     ohai "Post-install: Installing to #{target_dir}"
     ohai "libexec path: #{libexec}"
-    ohai "Files in libexec:"
-    system "ls", "-la", libexec.to_s
 
-    # Create the plugins directory if it doesn't exist using mkdir -p
-    system "mkdir", "-p", plugin_dir
-    ohai "Created/verified plugin directory: #{plugin_dir}"
-
-    # Remove target if it exists (for reinstalls)
-    if File.exist?(target_dir)
-      ohai "Removing existing installation at #{target_dir}"
-      system "rm", "-rf", target_dir
+    # Create the plugins directory if it doesn't exist
+    unless system "mkdir", "-p", plugin_dir
+      odie "Failed to create plugin directory: #{plugin_dir}"
     end
 
-    # Create the target directory
-    system "mkdir", "-p", target_dir
-    ohai "Created target directory: #{target_dir}"
+    # Create target directory if it doesn't exist
+    unless system "mkdir", "-p", target_dir
+      odie "Failed to create target directory: #{target_dir}"
+    end
 
-    # Copy files from Cellar to the plugin directory using cp
-    ohai "Copying files from #{libexec} to #{target_dir}"
-    system "cp", "-R", "#{libexec}/", target_dir
+    # Copy files from Cellar to the plugin directory, overwriting if exists
+    # Using -f flag to force overwrite without prompting
+    ohai "Copying plugin files..."
+    unless system "cp", "-Rf", "#{libexec}/.", target_dir
+      odie "Failed to copy files to #{target_dir}"
+    end
 
     # Verify installation
     if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
-      ohai "Installation successful!"
-      ohai "Files installed:"
+      ohai "✓ Installation successful!"
+      ohai "Plugin files:"
       system "ls", "-la", target_dir
     else
-      opoo "Installation may have failed - target directory is empty"
+      odie "Installation failed - target directory is empty"
     end
-  rescue StandardError => e
-    odie "Post-install failed: #{e.message}\n#{e.backtrace.join("\n")}"
   end
 
   test do
