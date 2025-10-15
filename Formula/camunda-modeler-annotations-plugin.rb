@@ -30,6 +30,13 @@ class CamundaModelerAnnotationsPlugin < Formula
         FileUtils.cp_r(file, target_dir)
       end
     end
+    
+    # Create a marker file in Homebrew's prefix so it knows we installed something
+    # This prevents "Empty installation" error
+    (prefix/"installed.txt").write <<~EOS
+      Camunda Modeler Annotations Plugin installed to:
+      #{target_dir}
+    EOS
   end
 
   def caveats
