@@ -43,10 +43,10 @@ class CamundaModelerAnnotationsPlugin < Formula
       system "mkdir", "-p", target_dir or odie "Failed to create target directory: #{target_dir}"
     end
 
-    # Copy files from Cellar to the plugin directory, overwriting if exists
-    # Using -f flag to force overwrite without prompting
+    # Copy files from Cellar to the plugin directory using ditto
+    # ditto works better than cp with macOS permission restrictions
     ohai "Copying plugin files..."
-    system "cp", "-Rf", "#{libexec}/.", target_dir or odie "Failed to copy files to #{target_dir}"
+    system "ditto", libexec.to_s, target_dir or odie "Failed to copy files to #{target_dir}"
 
     # Verify installation
     if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
