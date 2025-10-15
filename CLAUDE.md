@@ -78,6 +78,15 @@ ls -la $(brew --prefix camunda-modeler-annotations-plugin)/libexec
 ls -la ~/Library/Application\ Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin
 ```
 
-## Known Issues
+## Implementation Notes
 
-The formula file currently contains duplicate class definitions and method definitions (lines 1-7 and 8-14, lines 15-31 and 33-49). Only the last definitions are actually used by Homebrew, but these duplicates should be cleaned up.
+### macOS Permission Handling
+
+The formula uses `ditto` instead of `cp` for copying files to `~/Library/Application Support` because:
+- macOS applies extended attributes and security restrictions to Application Support directories
+- `cp` fails with "Operation not permitted" even with `-Rf` flags
+- `ditto` is a macOS-native tool that properly handles these restrictions
+
+### Why Post-Install Hook?
+
+Camunda Modeler looks for plugins in the user's Application Support directory, not in Homebrew's Cellar. The `post_install` hook runs outside Homebrew's sandbox, allowing writes to the user's home directory.
