@@ -12,7 +12,7 @@ class CamundaModelerAnnotationsPlugin < Formula
   sha256 "NEW_SHA256_HASH_HERE"
   version "1.1.0"
 
-  def install
+   def install
     # Check if files are in a subdirectory or at root level
     if File.directory?("camunda-modeler-annotations-plugin")
       # Files are in a subdirectory, install contents of that directory
@@ -74,8 +74,6 @@ class CamundaModelerAnnotationsPlugin < Formula
       odie "Post-install failed: #{e.message}\n#{e.backtrace.join("\n")}"
     end
   end
-
-
 
   def caveats
     <<~EOS
