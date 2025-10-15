@@ -33,21 +33,20 @@ class CamundaModelerAnnotationsPlugin < Formula
     ohai "libexec path: #{libexec}"
 
     # Create the plugins directory if it doesn't exist
-    unless system "mkdir", "-p", plugin_dir
-      odie "Failed to create plugin directory: #{plugin_dir}"
+    # Check first to avoid permission issues with mkdir on existing dirs
+    unless Dir.exist?(plugin_dir)
+      system "mkdir", "-p", plugin_dir or odie "Failed to create plugin directory: #{plugin_dir}"
     end
 
     # Create target directory if it doesn't exist
-    unless system "mkdir", "-p", target_dir
-      odie "Failed to create target directory: #{target_dir}"
+    unless Dir.exist?(target_dir)
+      system "mkdir", "-p", target_dir or odie "Failed to create target directory: #{target_dir}"
     end
 
     # Copy files from Cellar to the plugin directory, overwriting if exists
     # Using -f flag to force overwrite without prompting
     ohai "Copying plugin files..."
-    unless system "cp", "-Rf", "#{libexec}/.", target_dir
-      odie "Failed to copy files to #{target_dir}"
-    end
+    system "cp", "-Rf", "#{libexec}/.", target_dir or odie "Failed to copy files to #{target_dir}"
 
     # Verify installation
     if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
