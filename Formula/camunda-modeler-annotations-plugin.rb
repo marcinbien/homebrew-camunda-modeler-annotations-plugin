@@ -23,11 +23,28 @@ class CamundaModelerAnnotationsPlugin < Formula
 
   def post_install
     # This runs outside the sandbox, so we can write to the user's home directory
-    target = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin")
+    # Use ENV["HOME"] to ensure we get the real home directory
+    target_dir = "#{ENV["HOME"]}/Library/Application Support/camunda-modeler/resources/plugins"
+    target = "#{target_dir}/camunda-modeler-annotations-plugin"
+
+    # Create parent directory first
+    unless File.directory?(target_dir)
+      ohai "Creating plugins directory: #{target_dir}"
+      FileUtils.mkdir_p(target_dir)
+    end
 
     # Use ditto to copy files - it handles macOS permissions and extended attributes properly
     ohai "Installing plugin to: #{target}"
+
+    # Remove existing installation if present
+    FileUtils.rm_rf(target) if File.exist?(target)
+
+    # Copy using ditto
     system "ditto", libexec.to_s, target
+
+    unless File.exist?("#{target}/index.js")
+      opoo "Plugin installation may have failed - index.js not found"
+    end
 
     ohai "✅ Plugin installed successfully"
   end
