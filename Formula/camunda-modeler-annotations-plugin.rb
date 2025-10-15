@@ -28,32 +28,30 @@ class CamundaModelerAnnotationsPlugin < Formula
     real_home = ENV["HOME"]
     plugin_dir = "#{real_home}/Library/Application Support/camunda-modeler/resources/plugins"
     target_dir = "#{plugin_dir}/camunda-modeler-annotations-plugin"
-    
+
     ohai "Post-install: Installing to #{target_dir}"
     ohai "libexec path: #{libexec}"
     ohai "Files in libexec:"
     system "ls", "-la", libexec.to_s
-    
-    # Create the plugins directory if it doesn't exist
-    FileUtils.mkdir_p(plugin_dir)
+
+    # Create the plugins directory if it doesn't exist using mkdir -p
+    system "mkdir", "-p", plugin_dir
     ohai "Created/verified plugin directory: #{plugin_dir}"
-    
+
     # Remove target if it exists (for reinstalls)
     if File.exist?(target_dir)
       ohai "Removing existing installation at #{target_dir}"
-      FileUtils.rm_rf(target_dir)
+      system "rm", "-rf", target_dir
     end
-    
+
     # Create the target directory
-    FileUtils.mkdir_p(target_dir)
+    system "mkdir", "-p", target_dir
     ohai "Created target directory: #{target_dir}"
-    
-    # Copy files from Cellar to the plugin directory
-    Dir["#{libexec}/*"].each do |file|
-      ohai "Copying: #{file} -> #{target_dir}/"
-      FileUtils.cp_r(file, target_dir)
-    end
-    
+
+    # Copy files from Cellar to the plugin directory using cp
+    ohai "Copying files from #{libexec} to #{target_dir}"
+    system "cp", "-R", "#{libexec}/", target_dir
+
     # Verify installation
     if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
       ohai "Installation successful!"
