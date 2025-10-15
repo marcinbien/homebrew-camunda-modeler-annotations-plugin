@@ -12,20 +12,21 @@ def install
   ohai "Creating plugin directory at #{target}"
   mkdir_p target
 
-  # Print contents of buildpath to help debug
-  ohai "Listing buildpath contents:"
-  system "ls", "-R", buildpath
+  # Extract the ZIP file
+  system "unzip", "-q", "#{cached_download}", "-d", buildpath
 
-  # Find extracted plugin folder inside buildpath
-  extracted_dir = Dir.glob("#{buildpath}/**/camunda-modeler-annotations-plugin").first
+  # Find the extracted directory
+  extracted_dir = Dir["#{buildpath}/camunda-modeler-annotations-plugin/*"].first
 
   if extracted_dir.nil?
-    odie "❌ Could not find camunda-modeler-annotations-plugin directory inside the zip. Check the archive structure."
+    odie "❌ Could not find index.js inside the extracted directory. Check the archive structure."
   end
 
+  # Copy the contents to the target directory
   ohai "✅ Found extracted directory: #{extracted_dir}"
   cp_r extracted_dir, target
 end
+
 
 
   def caveats
