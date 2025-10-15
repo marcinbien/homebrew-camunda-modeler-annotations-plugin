@@ -12,6 +12,24 @@ class CamundaModelerAnnotationsPlugin < Formula
   sha256 "NEW_SHA256_HASH_HERE"
   version "1.1.0"
 
+def install
+    # Check if files are in a subdirectory or at root level
+    if File.directory?("camunda-modeler-annotations-plugin")
+      # Files are in a subdirectory, install contents of that directory
+      libexec.install Dir["camunda-modeler-annotations-plugin/*"]
+    else
+      # Files are at root level
+      libexec.install Dir["*"]
+    end
+    
+    # Create a marker file in Homebrew's prefix
+    (prefix/"installed.txt").write <<~EOS
+      Camunda Modeler Annotations Plugin
+      Files stored in: #{libexec}
+      Will be linked to user directory in post_install
+    EOS
+  end
+
    def install
     # Check if files are in a subdirectory or at root level
     if File.directory?("camunda-modeler-annotations-plugin")
@@ -36,56 +54,41 @@ class CamundaModelerAnnotationsPlugin < Formula
     plugin_dir = "#{real_home}/Library/Application Support/camunda-modeler/resources/plugins"
     target_dir = "#{plugin_dir}/camunda-modeler-annotations-plugin"
     
-    begin
-      ohai "Post-install: Installing to #{target_dir}"
-      ohai "libexec path: #{libexec}"
-      ohai "Files in libexec:"
-      system "ls", "-la", libexec.to_s
-      
-      # Create the plugins directory if it doesn't exist
-      FileUtils.mkdir_p(plugin_dir)
-      ohai "Created/verified plugin directory: #{plugin_dir}"
-      
-      # Remove target if it exists (for reinstalls)
-      if File.exist?(target_dir)
-        ohai "Removing existing installation at #{target_dir}"
-        FileUtils.rm_rf(target_dir)
-      end
-      
-      # Create the target directory
-      FileUtils.mkdir_p(target_dir)
-      ohai "Created target directory: #{target_dir}"
-      
-      # Copy files from Cellar to the plugin directory
-      Dir["#{libexec}/*"].each do |file|
-        ohai "Copying: #{file} -> #{target_dir}/"
-        FileUtils.cp_r(file, target_dir)
-      end
-      
-      # Verify installation
-      if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
-        ohai "Installation successful!"
-        ohai "Files installed:"
-        system "ls", "-la", target_dir
-      else
-        opoo "Installation may have failed - target directory is empty"
-      end
-    rescue => e
-      odie "Post-install failed: #{e.message}\n#{e.backtrace.join("\n")}"
+    ohai "Post-install: Installing to #{target_dir}"
+    ohai "libexec path: #{libexec}"
+    ohai "Files in libexec:"
+    system "ls", "-la", libexec.to_s
+    
+    # Create the plugins directory if it doesn't exist
+    FileUtils.mkdir_p(plugin_dir)
+    ohai "Created/verified plugin directory: #{plugin_dir}"
+    
+    # Remove target if it exists (for reinstalls)
+    if File.exist?(target_dir)
+      ohai "Removing existing installation at #{target_dir}"
+      FileUtils.rm_rf(target_dir)
     end
-  end
-
-  def caveats
-    <<~EOS
-      This extension requires Camunda Modeler to be installed.
-      If you haven't installed it yet, run:
-        brew install --cask camunda-modeler
-
-      The extension has been installed to:
-        ~/Library/Application Support/camunda-modeler/plugins
-
-      Please restart Camunda Modeler to load the extension.
-    EOS
+    
+    # Create the target directory
+    FileUtils.mkdir_p(target_dir)
+    ohai "Created target directory: #{target_dir}"
+    
+    # Copy files from Cellar to the plugin directory
+    Dir["#{libexec}/*"].each do |file|
+      ohai "Copying: #{file} -> #{target_dir}/"
+      FileUtils.cp_r(file, target_dir)
+    end
+    
+    # Verify installation
+    if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
+      ohai "Installation successful!"
+      ohai "Files installed:"
+      system "ls", "-la", target_dir
+    else
+      opoo "Installation may have failed - target directory is empty"
+    end
+  rescue StandardError => e
+    odie "Post-install failed: #{e.message}\n#{e.backtrace.join("\n")}"
   end
 
   test do
