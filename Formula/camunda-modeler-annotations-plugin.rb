@@ -6,13 +6,6 @@ class CamundaModelerAnnotationsPlugin < Formula
   version "0.0.2"
 
   def install
-    # Target directory where Camunda Modeler looks for plugins
-    target = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins")
-
-    # Create the plugins directory if it doesn't exist
-    mkdir_p target
-    ohai "Plugin directory: #{target}"
-
     # Extract the ZIP file to buildpath
     system "unzip", "-q", cached_download, "-d", buildpath
 
@@ -24,12 +17,23 @@ class CamundaModelerAnnotationsPlugin < Formula
       odie "Could not find plugin folder: #{plugin_folder}"
     end
 
-    ohai "Copying plugin from: #{plugin_folder}"
+    # Install to libexec (Homebrew-managed directory)
+    libexec.install Dir["#{plugin_folder}/*"]
+  end
 
-    # Copy the plugin folder to the target directory
-    cp_r plugin_folder, target
+  def post_install
+    # This runs outside the sandbox, so we can write to the user's home directory
+    target = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin")
 
-    ohai "Plugin installed successfully"
+    # Create the plugins directory if it doesn't exist
+    ohai "Creating plugin directory: #{target}"
+    system "mkdir", "-p", File.dirname(target)
+
+    # Copy from libexec to the Camunda Modeler plugins directory
+    ohai "Installing plugin to: #{target}"
+    system "cp", "-R", libexec.to_s, target
+
+    ohai "✅ Plugin installed successfully"
   end
 
   def caveats
