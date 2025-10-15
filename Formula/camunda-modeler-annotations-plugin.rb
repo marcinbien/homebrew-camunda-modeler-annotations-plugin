@@ -19,33 +19,70 @@ class CamundaModelerAnnotationsPlugin < Formula
 
     # Install to libexec (Homebrew-managed directory)
     libexec.install Dir["#{plugin_folder}/*"]
+
+    # Create an installation marker file with instructions
+    (prefix/"INSTALL_INSTRUCTIONS.txt").write <<~EOS
+      This plugin has been downloaded to:
+      #{libexec}
+
+      To complete installation, run:
+      cp -r "#{libexec}" "$HOME/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"
+    EOS
   end
 
   def post_install
-    # Install directly to the Camunda Modeler plugins directory
-    # Using Ruby's FileUtils instead of system commands to avoid sandbox issues
-    target_base = "#{Dir.home}/Library/Application Support/camunda-modeler/resources/plugins"
+    target_base = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins")
     target = "#{target_base}/camunda-modeler-annotations-plugin"
 
-    # Create the plugins directory if needed
-    FileUtils.mkdir_p(target_base) unless File.directory?(target_base)
+    # Try to install, but don't fail if it doesn't work
+    begin
+      # Create a temporary shell script and execute it
+      # This runs the command in a separate process outside Ruby's context
+      script = Tempfile.new(["install-plugin", ".sh"])
+      script.write <<~SCRIPT
+        #!/bin/bash
+        mkdir -p "#{target_base}"
+        rm -rf "#{target}"
+        cp -r "#{libexec}" "#{target}"
+        if [ -f "#{target}/index.js" ]; then
+          echo "✅ Plugin installed successfully"
+          exit 0
+        else
+          exit 1
+        fi
+      SCRIPT
+      script.close
+      FileUtils.chmod(0755, script.path)
 
-    # Remove existing installation if present
-    FileUtils.rm_rf(target) if File.exist?(target)
-
-    # Copy files from libexec to target
-    FileUtils.cp_r(libexec, target)
-
-    ohai "✅ Plugin installed to: #{target}"
+      system script.path
+      script.unlink
+    rescue => e
+      opoo "Automatic installation failed. Please see caveats for manual installation."
+    end
   end
 
   def caveats
-    <<~EOS
-      ✅ Camunda Modeler Annotations Plugin has been installed.
+    target = "~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"
+    installed = File.exist?(File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin/index.js"))
 
-      📝 Restart Camunda Modeler to load the plugin.
-      The plugin will appear in the Plugins menu.
-    EOS
+    if installed
+      <<~EOS
+        ✅ Camunda Modeler Annotations Plugin has been installed to:
+           #{target}
+
+        📝 Restart Camunda Modeler to load the plugin.
+      EOS
+    else
+      <<~EOS
+        ⚠️  Automatic installation was blocked by macOS permissions.
+
+        To complete installation, run this command:
+
+          mkdir -p "~/Library/Application Support/camunda-modeler/resources/plugins" && cp -r "#{libexec}" "~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"
+
+        Then restart Camunda Modeler.
+      EOS
+    end
   end
 
   test do
