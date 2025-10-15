@@ -6,11 +6,16 @@ class CamundaModelerAnnotationsPlugin < Formula
   version "0.0.2"
 
   def install
+    # Get the real home directory (not Homebrew's sandbox home)
+    real_home = ENV["HOME"]
+    
     # The plugin directory path
-    plugin_dir = "#{Dir.home}/Library/Application Support/camunda-modeler/resources/plugins"
+    plugin_dir = "#{real_home}/Library/Application Support/camunda-modeler/resources/plugins"
     target_dir = "#{plugin_dir}/camunda-modeler-annotations-plugin"
     
     # Debug: Show what we're working with
+    ohai "Real home directory: #{real_home}"
+    ohai "Target plugin directory: #{plugin_dir}"
     ohai "Current directory: #{Dir.pwd}"
     ohai "Files available:"
     system "ls", "-la"
