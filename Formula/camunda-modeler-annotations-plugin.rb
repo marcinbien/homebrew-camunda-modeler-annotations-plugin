@@ -7,25 +7,20 @@ class CamundaModelerAnnotationsPlugin < Formula
 
 def install
   target = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins")
-
-  # Ensure target directory exists
-  ohai "Creating plugin directory at #{target}"
   mkdir_p target
+  ohai "Creating plugin directory at #{target}"
 
-  # Extract the ZIP file
-  system "unzip", "-q", "#{cached_download}", "-d", buildpath
+  # Unzip the archive to buildpath
+  system "unzip", "-q", cached_download, "-d", buildpath
 
-  # Find the extracted directory
-  extracted_dir = Dir["#{buildpath}/camunda-modeler-annotations-plugin/*"].first
+  # The plugin folder inside the zip
+  plugin_folder = Dir.glob("#{buildpath}/camunda-modeler-annotations-plugin/*").first
+  plugin_root = File.dirname(plugin_folder)  # parent folder containing index.js
 
-  if extracted_dir.nil?
-    odie "❌ Could not find index.js inside the extracted directory. Check the archive structure."
-  end
-
-  # Copy the contents to the target directory
-  ohai "✅ Found extracted directory: #{extracted_dir}"
-  cp_r extracted_dir, target
+  ohai "Copying plugin folder: #{plugin_root}"
+  cp_r plugin_root, target
 end
+
 
 
 
