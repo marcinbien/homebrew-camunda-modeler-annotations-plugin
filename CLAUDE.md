@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a Homebrew tap repository for the Camunda Modeler Annotations Plugin. It contains a Ruby formula that installs a plugin/extension for Camunda Modeler on macOS.
+This is a Homebrew tap repository for the Camunda Modeler Annotations Plugin. It contains a Ruby formula that installs a plugin/extension for Camunda Modeler on macOS by placing files directly into the user's Application Support directory.
 
 **Repository URL**: https://github.com/marcinbien/homebrew-camunda-modeler-annotations-plugin
 
@@ -18,23 +18,22 @@ The repository follows Homebrew tap conventions:
 
 ### Installation Flow
 
-The formula implements a two-stage installation process:
+The formula uses a simplified single-stage installation:
 
-1. **install method**: Downloads and extracts the plugin to Homebrew's managed directory (`libexec`)
-   - Handles both subdirectory and root-level extraction scenarios
-   - Creates a marker file documenting the installation
+1. Downloads the plugin ZIP from GitHub releases
+2. Extracts the ZIP to `buildpath`
+3. Locates the plugin folder within the extracted contents (handles nested directory structures)
+4. Copies directly to: `~/Library/Application Support/camunda-modeler/resources/plugins/`
 
-2. **post_install method**: Runs outside Homebrew's sandbox to copy files to the user's home directory
-   - Target location: `~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin`
-   - This is necessary because Camunda Modeler looks for plugins in the user's Application Support directory, not in Homebrew's Cellar
+This approach installs directly to the user's Application Support directory because that's where Camunda Modeler looks for plugins (not in Homebrew's Cellar).
 
 ### Key Implementation Details
 
-- The formula downloads a release ZIP from GitHub (currently v0.0.2)
-- Files are first installed to `libexec` (Homebrew-managed location)
-- In `post_install`, files are copied from `libexec` to the Camunda Modeler plugins directory
-- The formula handles both nested and flat directory structures in the ZIP file
-- Includes verbose logging (`ohai`) for debugging installation issues
+- Uses `cp_r` to recursively copy the plugin folder
+- Creates the target directory with `mkdir_p` if it doesn't exist
+- Handles nested directory structures in the ZIP file via `Dir.glob` pattern matching
+- Includes error handling with `odie` if the plugin folder structure is unexpected
+- Uses `ohai` for verbose logging to help debug installation issues
 
 ## Common Commands
 
@@ -50,7 +49,7 @@ brew reinstall --build-from-source Formula/camunda-modeler-annotations-plugin.rb
 # Uninstall
 brew uninstall camunda-modeler-annotations-plugin
 
-# Run the formula's test
+# Run the formula's test (if defined)
 brew test camunda-modeler-annotations-plugin
 ```
 
@@ -64,15 +63,13 @@ When releasing a new version:
    ```bash
    shasum -a 256 /path/to/downloaded/release.zip
    ```
+4. Test the installation locally before pushing
 
 ### Debugging Installation
 
 ```bash
-# View installation logs
+# View installation logs with verbose output
 brew install -v camunda-modeler-annotations-plugin
-
-# Check what's installed in libexec
-ls -la $(brew --prefix camunda-modeler-annotations-plugin)/libexec
 
 # Check the final plugin installation
 ls -la ~/Library/Application\ Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin
@@ -80,13 +77,29 @@ ls -la ~/Library/Application\ Support/camunda-modeler/resources/plugins/camunda-
 
 ## Implementation Notes
 
-### macOS Permission Handling
+### Direct Installation Approach
 
-The formula uses `ditto` instead of `cp` for copying files to `~/Library/Application Support` because:
-- macOS applies extended attributes and security restrictions to Application Support directories
-- `cp` fails with "Operation not permitted" even with `-Rf` flags
-- `ditto` is a macOS-native tool that properly handles these restrictions
+Unlike typical Homebrew formulas that install to the Cellar, this formula installs directly to the user's Application Support directory. This is necessary because:
+- Camunda Modeler looks for plugins in `~/Library/Application Support/camunda-modeler/resources/plugins/`
+- The plugin must be in this exact location to be discovered by Camunda Modeler
+- Symlinking from the Cellar would not work as the application expects a specific directory structure
 
-### Why Post-Install Hook?
+### Evolution History
 
-Camunda Modeler looks for plugins in the user's Application Support directory, not in Homebrew's Cellar. The `post_install` hook runs outside Homebrew's sandbox, allowing writes to the user's home directory.
+The formula went through several iterations to handle macOS permission issues:
+- Earlier versions used a two-stage process with `post_install` hooks
+- Earlier versions attempted to use `ditto` to handle macOS extended attributes
+- Current version (as of commits #10-#13) uses simplified `cp_r` with direct installation
+- Key lesson: The nested directory structure in the ZIP required careful glob pattern matching to locate the actual plugin folder
+
+### ZIP File Structure Expectations
+
+The formula expects the downloaded ZIP to contain:
+```
+camunda-modeler-annotations-plugin/
+  camunda-modeler-annotations-plugin/
+    index.js
+    [other plugin files]
+```
+
+The `Dir.glob` pattern matches this nested structure. If the ZIP structure changes, update the glob pattern in the `install` method.
