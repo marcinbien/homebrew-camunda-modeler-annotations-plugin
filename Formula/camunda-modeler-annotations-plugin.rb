@@ -25,13 +25,9 @@ class CamundaModelerAnnotationsPlugin < Formula
     # This runs outside the sandbox, so we can write to the user's home directory
     target = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin")
 
-    # Create the plugins directory if it doesn't exist
-    ohai "Creating plugin directory: #{target}"
-    system "mkdir", "-p", File.dirname(target)
-
-    # Copy from libexec to the Camunda Modeler plugins directory
+    # Use ditto to copy files - it handles macOS permissions and extended attributes properly
     ohai "Installing plugin to: #{target}"
-    system "cp", "-R", libexec.to_s, target
+    system "ditto", libexec.to_s, target
 
     ohai "✅ Plugin installed successfully"
   end
