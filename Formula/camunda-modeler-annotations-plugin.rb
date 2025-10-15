@@ -12,9 +12,15 @@ class CamundaModelerAnnotationsPlugin < Formula
     # Create the plugins directory if it doesn't exist
     FileUtils.mkdir_p(plugin_dir)
     
-    # Copy all files from the extracted zip to the plugin directory
-    # Adjust the path if your zip has a nested structure
-    FileUtils.cp_r(Dir["*"], plugin_dir)
+    # The zip contains a single directory with the plugin files
+    # Copy it directly to the plugins folder
+    plugin_source = "camunda-modeler-annotations-plugin"
+    
+    if File.directory?(plugin_source)
+      FileUtils.cp_r(plugin_source, plugin_dir)
+    else
+      odie "Expected directory '#{plugin_source}' not found in archive"
+    end
   end
 
   def caveats
