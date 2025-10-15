@@ -17,6 +17,24 @@ class CamundaModelerAnnotationsPlugin < Formula
     EOS
   end
 
+  def install
+    # Check if files are in a subdirectory or at root level
+    if File.directory?("camunda-modeler-annotations-plugin")
+      # Files are in a subdirectory, install contents of that directory
+      libexec.install Dir["camunda-modeler-annotations-plugin/*"]
+    else
+      # Files are at root level
+      libexec.install Dir["*"]
+    end
+    
+    # Create a marker file in Homebrew's prefix
+    (prefix/"installed.txt").write <<~EOS
+      Camunda Modeler Annotations Plugin
+      Files stored in: #{libexec}
+      Will be linked to user directory in post_install
+    EOS
+  end
+
   def post_install
     # This runs outside the sandbox, so we can write to the user's home directory
     real_home = ENV["HOME"]
