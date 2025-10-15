@@ -34,30 +34,16 @@ class CamundaModelerAnnotationsPlugin < Formula
     target_base = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins")
     target = "#{target_base}/camunda-modeler-annotations-plugin"
 
-    # Try to install, but don't fail if it doesn't work
-    begin
-      # Create a temporary shell script and execute it
-      # This runs the command in a separate process outside Ruby's context
-      script = Tempfile.new(["install-plugin", ".sh"])
-      script.write <<~SCRIPT
-        #!/bin/bash
-        mkdir -p "#{target_base}"
-        rm -rf "#{target}"
-        cp -r "#{libexec}" "#{target}"
-        if [ -f "#{target}/index.js" ]; then
-          echo "✅ Plugin installed successfully"
-          exit 0
-        else
-          exit 1
-        fi
-      SCRIPT
-      script.close
-      FileUtils.chmod(0755, script.path)
+    # Use rsync which handles macOS permissions better than cp
+    # Note: trailing slashes are important - source/ copies contents, target/ is the destination
+    ohai "Installing plugin to: #{target}"
+    system "mkdir", "-p", target_base
+    system "rsync", "-a", "#{libexec}/", "#{target}/"
 
-      system script.path
-      script.unlink
-    rescue => e
-      opoo "Automatic installation failed. Please see caveats for manual installation."
+    if File.exist?("#{target}/index.js")
+      ohai "✅ Plugin installed successfully"
+    else
+      opoo "Installation may have failed. Please see caveats."
     end
   end
 
@@ -78,7 +64,7 @@ class CamundaModelerAnnotationsPlugin < Formula
 
         To complete installation, run this command:
 
-          mkdir -p "~/Library/Application Support/camunda-modeler/resources/plugins" && cp -r "#{libexec}" "~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"
+          mkdir -p "~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin" && rsync -a "#{libexec}/" "~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin/"
 
         Then restart Camunda Modeler.
       EOS
