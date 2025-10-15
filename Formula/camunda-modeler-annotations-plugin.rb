@@ -12,13 +12,21 @@ def install
   ohai "Creating plugin directory at #{target}"
   mkdir_p target
 
-  # Find the extracted directory
-  extracted_dir = Dir["#{buildpath}/camunda-modeler-annotations-plugin*"].first
-  ohai "Using extracted directory: #{extracted_dir}"
+  # Print contents of buildpath to help debug
+  ohai "Listing buildpath contents:"
+  system "ls", "-R", buildpath
 
-  # Copy it over
+  # Find extracted plugin folder inside buildpath
+  extracted_dir = Dir.glob("#{buildpath}/**/camunda-modeler-annotations-plugin").first
+
+  if extracted_dir.nil?
+    odie "❌ Could not find camunda-modeler-annotations-plugin directory inside the zip. Check the archive structure."
+  end
+
+  ohai "✅ Found extracted directory: #{extracted_dir}"
   cp_r extracted_dir, target
 end
+
 
   def caveats
     <<~EOS
