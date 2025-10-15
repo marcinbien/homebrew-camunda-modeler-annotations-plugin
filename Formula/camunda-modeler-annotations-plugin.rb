@@ -6,46 +6,25 @@ class CamundaModelerAnnotationsPlugin < Formula
   version "0.0.2"
 
   def install
-    # Check if files are in a subdirectory or at root level
-    if File.directory?("camunda-modeler-annotations-plugin")
-      # Files are in a subdirectory, install contents of that directory
-      libexec.install Dir["camunda-modeler-annotations-plugin/*"]
-    else
-      # Files are at root level
-      libexec.install Dir["*"]
-    end
+    # Determine target directory for Camunda Modeler plugins
+    target = File.expand_path("~/Library/Application Support/camunda-modeler/resources/plugins")
 
-    # Create a marker file in Homebrew's prefix
-    (prefix/"installed.txt").write <<~EOS
-      Camunda Modeler Annotations Plugin
-      Files stored in: #{libexec}
-      Will be linked to user directory in post_install
+    # Ensure directories exist
+    ohai "Creating plugin directory at #{target}"
+    mkdir_p target
+
+    # Unpack the plugin folder (the zip already contains one directory)
+    plugin_dir = "camunda-modeler-annotations-plugin"
+    ohai "Copying plugin files..."
+    cp_r plugin_dir, target
+  end
+
+  def caveats
+    <<~EOS
+      ✅ Plugin installed to:
+         ~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin
+
+      You can restart Camunda Modeler to see it under the Plugins menu.
     EOS
-  end
-
-  def post_install
-    # This runs outside the sandbox, so we can write to the user's home directory
-    real_home = ENV["HOME"]
-    plugin_dir = "#{real_home}/Library/Application Support/camunda-modeler/resources/plugins"
-    target_dir = "#{plugin_dir}/camunda-modeler-annotations-plugin"
-
-    ohai "Post-install: Installing to #{target_dir}"
-
-    # Use ditto to copy files - it handles directory creation and macOS permissions
-    # better than mkdir + cp, avoiding "Operation not permitted" errors
-    system "ditto", libexec.to_s, target_dir or odie "Failed to copy files to #{target_dir}"
-
-    # Verify installation
-    if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
-      ohai "✓ Installation successful!"
-      ohai "Plugin installed at: #{target_dir}"
-    else
-      odie "Installation failed - target directory is empty"
-    end
-  end
-
-  test do
-    # Check if the plugin directory exists
-    assert_predicate Pathname.new("#{Dir.home}/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"), :exist?
   end
 end
