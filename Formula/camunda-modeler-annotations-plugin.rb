@@ -30,29 +30,15 @@ class CamundaModelerAnnotationsPlugin < Formula
     target_dir = "#{plugin_dir}/camunda-modeler-annotations-plugin"
 
     ohai "Post-install: Installing to #{target_dir}"
-    ohai "libexec path: #{libexec}"
 
-    # Create the plugins directory if it doesn't exist
-    # Check first to avoid permission issues with mkdir on existing dirs
-    unless Dir.exist?(plugin_dir)
-      system "mkdir", "-p", plugin_dir or odie "Failed to create plugin directory: #{plugin_dir}"
-    end
-
-    # Create target directory if it doesn't exist
-    unless Dir.exist?(target_dir)
-      system "mkdir", "-p", target_dir or odie "Failed to create target directory: #{target_dir}"
-    end
-
-    # Copy files from Cellar to the plugin directory using ditto
-    # ditto works better than cp with macOS permission restrictions
-    ohai "Copying plugin files..."
+    # Use ditto to copy files - it handles directory creation and macOS permissions
+    # better than mkdir + cp, avoiding "Operation not permitted" errors
     system "ditto", libexec.to_s, target_dir or odie "Failed to copy files to #{target_dir}"
 
     # Verify installation
     if Dir.exist?(target_dir) && !Dir.empty?(target_dir)
       ohai "✓ Installation successful!"
-      ohai "Plugin files:"
-      system "ls", "-la", target_dir
+      ohai "Plugin installed at: #{target_dir}"
     else
       odie "Installation failed - target directory is empty"
     end
