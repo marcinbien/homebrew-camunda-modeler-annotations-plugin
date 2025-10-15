@@ -5,12 +5,9 @@ class CamundaModelerExtension < Formula
   sha256 "a1d688f67320a17ad3194cdad811eb266404d2b907d367a70e00a7c78a9a3de9"
   version "0.0.2"
 
-  # Specify that Camunda Modeler should be installed
-  depends_on cask: "camunda-modeler"
-
   def install
     # The plugin directory path
-    plugin_dir = "#{Dir.home}/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin"
+    plugin_dir = "#{Dir.home}/Library/Application Support/camunda-modeler/resources/plugins"
     
     # Create the plugins directory if it doesn't exist
     FileUtils.mkdir_p(plugin_dir)
@@ -22,8 +19,12 @@ class CamundaModelerExtension < Formula
 
   def caveats
     <<~EOS
+      This extension requires Camunda Modeler to be installed.
+      If you haven't installed it yet, run:
+        brew install --cask camunda-modeler
+
       The extension has been installed to:
-        ~/Library/Application Support/camunda-modeler/resources/plugins/camunda-modeler-annotations-plugin
+        ~/Library/Application Support/camunda-modeler/plugins
 
       Please restart Camunda Modeler to load the extension.
     EOS
