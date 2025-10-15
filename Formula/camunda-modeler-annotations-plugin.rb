@@ -5,14 +5,7 @@ class CamundaModelerAnnotationsPlugin < Formula
   sha256 "a1d688f67320a17ad3194cdad811eb266404d2b907d367a70e00a7c78a9a3de9"
   version "0.0.2"
 
-class CamundaModelerAnnotationsPlugin < Formula
-  desc "Extensions/plugins for Camunda Modeler"
-  homepage "https://github.com/YOUR_USERNAME/YOUR_EXTENSION_REPO"
-  url "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v1.1.0/extension.zip"
-  sha256 "NEW_SHA256_HASH_HERE"
-  version "1.1.0"
-
-def install
+  def install
     # Check if files are in a subdirectory or at root level
     if File.directory?("camunda-modeler-annotations-plugin")
       # Files are in a subdirectory, install contents of that directory
@@ -21,25 +14,7 @@ def install
       # Files are at root level
       libexec.install Dir["*"]
     end
-    
-    # Create a marker file in Homebrew's prefix
-    (prefix/"installed.txt").write <<~EOS
-      Camunda Modeler Annotations Plugin
-      Files stored in: #{libexec}
-      Will be linked to user directory in post_install
-    EOS
-  end
 
-   def install
-    # Check if files are in a subdirectory or at root level
-    if File.directory?("camunda-modeler-annotations-plugin")
-      # Files are in a subdirectory, install contents of that directory
-      libexec.install Dir["camunda-modeler-annotations-plugin/*"]
-    else
-      # Files are at root level
-      libexec.install Dir["*"]
-    end
-    
     # Create a marker file in Homebrew's prefix
     (prefix/"installed.txt").write <<~EOS
       Camunda Modeler Annotations Plugin
